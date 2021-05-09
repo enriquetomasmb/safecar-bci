@@ -8,10 +8,16 @@
 # Enrique Tomás Martínez Beltrán - https://enriquetomasmb.com
 # Github repository: https://github.com/enriquetomasmb/bci-driving
 
+
+"""
+    Cognitve experiment.
+    Enrique Tomás Martínez Beltrán - https://enriquetomasmb.com
+    
+"""
+
 from __future__ import print_function
 
 VERSION = '1.0beta'
-
 
 # ==============================================================================
 # -- find module ---------------------------------------------------------
@@ -177,6 +183,7 @@ class World(object):
             carla.MapLayer.All
         ]
         self.timer = 0
+        self.simulation_type = 0
 
     def init_simulation(self):
         init_timer = time.time()
@@ -420,11 +427,22 @@ class DualControl(object):
                     world.camera_manager.toggle_recording()
                 elif event.key == K_z and not self.start_simulation:
                     world.init_simulation()
-                    print(colored("Comenzando simulación...", 'green'))
+                    world.simulation_type = 1
+                    global qdistraction
+                    qdistraction.put(1)
+                    print(colored("Comenzando simulación 1...", 'green'))
                     global queue
                     queue.put(True)
                     self.start_simulation = 1
-                    
+                elif event.key == K_x and not self.start_simulation:
+                    world.init_simulation()
+                    world.simulation_type = 2
+                    global qdistraction
+                    qdistraction.put(2)
+                    print(colored("Comenzando simulación 2...", 'green'))
+                    global queue
+                    queue.put(True)
+                    self.start_simulation = 1
                 if isinstance(self._control, carla.VehicleControl):
                     if event.key == K_m:
                         self._control.manual_gear_shift = not self._control.manual_gear_shift
@@ -561,7 +579,7 @@ class HUD(object):
         v = world.player.get_velocity()
         c = world.player.get_control()
         self._info_text = [
-            'Tiempo restante: % 12s' % datetime.timedelta(seconds=int(10*60-(time.time()-self.timer))) if self.timer != 0 else 'Pulsa "Z" para comenzar la simulación',#self.simulation_time
+            'Tiempo restante: % 12s' % datetime.timedelta(seconds=int(10*60-(time.time()-self.timer))) if self.timer != 0 else 'Pulsa "Z" para comenzar la simulación 1 | Pulsa "X" para comenzar la simulación 2',#self.simulation_time
             'Math',
             'Box'
         ]
@@ -785,7 +803,12 @@ class CollisionSensor(object):
             # global stim_server
             # stim_server.push_sample([69], time_event.timestamp())
             global qev
-            qev.put((69, time_event.timestamp()))
+            if "vehicle" in actor_type:
+                qev.put((21, time_event.timestamp()))
+            elif "walker" in actor_type:
+                qev.put((22, time_event.timestamp()))
+            else:
+                qev.put((23, time_event.timestamp()))
             self.last_collision = time_event
 
         impulse = event.normal_impulse
@@ -825,8 +848,9 @@ class LaneInvasionSensor(object):
         self.hud.notification('Crossed line %s' % ' and '.join(text))
         time_event = datetime.datetime.now()
         if (time_event - self.last_collision) > datetime.timedelta(seconds=3):
-            qev.put((25, time_event.timestamp()))
-            print(text[0])
+
+            if "SolidSolid" or "SolidBroken" or "Solid" in text:
+                qev.put((11, time_event.timestamp()))
         self.last_collision = datetime.datetime.now()
 
 
@@ -1114,39 +1138,73 @@ def startMath(hud):
         width = hud.dim[0]
         height = hud.dim[1]
         global qev
+        global qdistraction
+        distraction = 0
         while True:
-            width = hud.dim[0]
-            height = hud.dim[1]
-            q, ans = genMath()
-            hud._distraction_text.set_dim_pos((width/4, 40), (60, 60))
-            time_event = datetime.datetime.now()
-            hud.distraction('{}'.format(q), seconds=5)
-            qev.put((11, time_event.timestamp()))
+            if not qdistraction.empty():
+                distraction = qdistraction.get()
+            if distraction == 2:
+                q, ans = genMath()
+                hud._distraction_text.set_dim_pos((width/4, 40), (60, 60))
+                time_event = datetime.datetime.now()
+                time.sleep(10)
+                hud.distraction('{}'.format(q), seconds=5)
+                qev.put((51, time_event.timestamp()))
 
-            q, ans = genMath()
-            time.sleep(10)
-            hud._distraction_text.set_dim_pos((width/4, 40), (width/2 + 60, 60))
-            time_event = datetime.datetime.now()
-            hud.distraction('{}'.format(q), seconds=5)
-            qev.put((12, time_event.timestamp()))
-            time.sleep(10)
+                q, ans = genMath()
+                hud._distraction_text.set_dim_pos((width/4, 40), (width/2 + 60, 60))
+                time.sleep(10)
+                time_event = datetime.datetime.now()
+                hud.distraction('{}'.format(q), seconds=5)
+                qev.put((51, time_event.timestamp()))
+                time.sleep(20)
+            elif distraction == 99:
+                return
     finally:
         pass
 
 def startBox(hud):
     try:
-        width = hud.dim[0]
-        height = hud.dim[1]
         global qev
+        global qdistraction
         image = pygame.image.load("resources/azul.jpg")
+        distraction = 0
         while True:
-            x = random.randint(100, 900)
-            y = random.randint(100, 900)
-            hud._images.set_dim_pos((80, 80), (x, y))
-            time_event = datetime.datetime.now()
-            hud.dimage(image, seconds=5)
-            qev.put((13, time_event.timestamp()))
-            time.sleep(10)
+            if not qdistraction.empty():
+                distraction = qdistraction.get()
+            if distraction == 2:
+                x = random.randint(100, 900)
+                y = random.randint(100, 900)
+                hud._images.set_dim_pos((80, 80), (x, y))
+                time.sleep(50)
+                time_event = datetime.datetime.now()
+                hud.dimage(image, seconds=5)
+                qev.put((52, time_event.timestamp()))
+
+                x = random.randint(100, 900)
+                y = random.randint(100, 900)
+                hud._images.set_dim_pos((80, 80), (x, y))
+                time_event = datetime.datetime.now()
+                hud.dimage(image, seconds=5)
+                qev.put((52, time_event.timestamp()))
+
+                x = random.randint(100, 900)
+                y = random.randint(100, 900)
+                hud._images.set_dim_pos((80, 80), (x, y))
+                time_event = datetime.datetime.now()
+                hud.dimage(image, seconds=5)
+                qev.put((52, time_event.timestamp()))
+
+                x = random.randint(100, 900)
+                y = random.randint(100, 900)
+                hud._images.set_dim_pos((80, 80), (x, y))
+                time_event = datetime.datetime.now()
+                hud.dimage(image, seconds=5)
+                qev.put((52, time_event.timestamp()))
+
+                time.sleep(50)
+            elif distraction == 99:
+                return
         # t_end = time.time() + 5
         # while time.time() < t_end:  
         #     hud.distraction('Hola esto es una prueba', seconds=5)
@@ -1223,11 +1281,12 @@ def init_game(args, path, server):
         dmax = 30;dmin = 0
         m = (0-1)/(dmax-dmin);b = -m*(dmax)
 
-        ccontrol = False
-        tr = threading.Thread(target=startMath, args=(hud,))
+        global qdistraction
+        qdistraction = multiprocessing.Queue()
+        tr = threading.Thread(target=startMath, args=(hud,qdistraction))
         tr.daemon = True
         tr.start()
-        tr2 = threading.Thread(target=startBox, args=(hud,))
+        tr2 = threading.Thread(target=startBox, args=(hud,qdistraction))
         tr2.daemon = True
         tr2.start()
         while control_loop:
@@ -1313,7 +1372,7 @@ def init_game(args, path, server):
                     time_event = datetime.datetime.now()
                     #alert_print('tl', str(traffic_light.id), time_event)
                     global qev
-                    qev.put((90, time_event.timestamp()))
+                    qev.put((15, time_event.timestamp()))
                     id_last_red = traffic_light.id
                     # traffic_light.set_state(carla.TrafficLightState.Green)
 
@@ -1471,8 +1530,8 @@ def main():
         queue.put(False)
         global qev
         qev = multiprocessing.Queue()
-        thread_rec = multiprocessing.Process(target=start_recording, args=('openbcigui', 60, queue, qev))
-        thread_rec.start()
+        thread_rec = multiprocessing.Process(target=start_recording, args=('openbcigui', 60, queue, qev, "experiments/{}/eeg/".format(user.path)))
+        # thread_rec.start()
 
         # Init driving scenario
         init_game(args, user.path, server)

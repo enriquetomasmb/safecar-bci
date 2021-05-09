@@ -21,7 +21,7 @@ from termcolor import colored
 import pandas as pd
 
 
-def start_recording(host, wait_max, q, qev):
+def start_recording(host, wait_max, q, qev, path):
     print(colored("Starting start_recording", "green"))
     # Load a file to stream raw data
     #data_path = sample.data_path()
@@ -73,7 +73,7 @@ def start_recording(host, wait_max, q, qev):
     finally:
         if datos_input:
             epochs_all = mne.concatenate_epochs(datos_input)
-            epochs_all.save('test-epo.fif')
+            epochs_all.save(path + 'test-epo.fif')
             #df_final = pd.concat(datos_input)
             #df_final.to_csv('out.csv', index=None)
         
@@ -85,7 +85,7 @@ def start_recording(host, wait_max, q, qev):
             df_final.append(df)
 
         df_final_out = pd.concat(df_final)
-        df_final_out.to_csv('out.csv', index=None, date_format='%s.%f')
+        df_final_out.to_csv(path + 'out.csv', index=None, date_format='%s.%f')
 
         print(colored("EEGRecording closed", "red"))
 
