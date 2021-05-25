@@ -21,7 +21,7 @@ from termcolor import colored
 import pandas as pd
 
 
-def start_recording(host, wait_max, q, qev, path):
+def start_recording(host, wait_max, q, qev, qevd, path):
     print(colored("Starting start_recording", "green"))
     # Load a file to stream raw data
     #data_path = sample.data_path()
@@ -29,7 +29,7 @@ def start_recording(host, wait_max, q, qev, path):
     #raw = read_raw_fif(raw_fname).crop(0, 30).load_data().pick('eeg')
     datos_input = []
     timestamps = []
-    estimulos = []
+    event_by_epoch = []
     # For this example, let's use the mock LSL stream.
     try:
         n_epochs = 0
@@ -42,21 +42,43 @@ def start_recording(host, wait_max, q, qev, path):
             # fig, ax = plt.subplots(figsize=(15, 8))
 
             started = True # False
-            event = (0,0)
+            event = (0,0) # Extern events
+            event_distraction = (0,0) # Math or Box
+
+            last_event_distraction = (0,0)
+            event_distraction_cont = 0
+
             while True:
                 if (started or q.get()):
                     started = True
                     if not qev.empty():
                         event = qev.get()
+                    if not qevd.empty():
+                        event_distraction = qevd.get()
                     
                     # plt.cla()
                     epoch, ts = client.get_data_as_epoch(n_samples=sfreq)
-                    timestamps.extend(ts)
-
-                    if event != (0,0):
-                        print(colored("{} - Event {}".format(event[1], event[0]), 'green'))
-                    epoch = mne.epochs.combine_event_ids(epoch, ['1'], {str(event[0]): 0})
-                    epoch.selection = [n_epochs]
+                    #timestamps.extend(ts)
+                    print(epoch.get_data())
+                    event_by_epoch.append(event)
+                    
+                    if event_distraction_cont != 0:
+                        epoch = mne.epochs.combine_event_ids(epoch, ['1'], {str(last_event_distraction[0]): 0})
+                        epoch.selection = [n_epochs]
+                        event_distraction_cont -= 1
+                    else:
+                        if event_distraction != (0,0):
+                            # Si se ha mostrado Math (5sec) = marcar esta Epoch y las 4 siguientes
+                            # Si se ha mostrado Box (5sec) = marcaar esta Epoch y las 4 siguientes
+                            #print(colored("{} - Event {}".format(event_distraction[1], event_distraction[0]), 'green'))
+                            last_event_distraction = event_distraction
+                            event_distraction_cont = 5
+                            epoch = mne.epochs.combine_event_ids(epoch, ['1'], {str(last_event_distraction[0]): 0})
+                            epoch.selection = [n_epochs]
+                            event_distraction_cont -= 1
+                        else:
+                            epoch = mne.epochs.combine_event_ids(epoch, ['1'], {str(event_distraction[0]): 0})
+                            epoch.selection = [n_epochs]
 
                     # ya se envían en uV, no hace falta hacer scaling
                     #df_epoch = epoch.to_data_frame(time_format=None, scalings=dict(eeg=1)) 
@@ -65,27 +87,35 @@ def start_recording(host, wait_max, q, qev, path):
                     
                     n_epochs += 1
                     event = (0,0)
-
+                    event_distraction = (0,0)
+                    #print(time.time())
                     #epoch.average().plot(axes=ax)
                     # fig.canvas.draw()
                     # fig.canvas.flush_events()
-            
+
     finally:
         if datos_input:
             epochs_all = mne.concatenate_epochs(datos_input)
             epochs_all.save(path + 'test-epo.fif')
             #df_final = pd.concat(datos_input)
             #df_final.to_csv('out.csv', index=None)
-        
-        # Creamos df auxiliar con timestamps
-        df_final = []
-        for i, ep in enumerate(datos_input):
-            df = ep.to_data_frame(time_format=None, scalings=dict(eeg=1))
-            df['Timestamp'] = timestamps[i]
-            df_final.append(df)
 
-        df_final_out = pd.concat(df_final)
-        df_final_out.to_csv(path + 'out.csv', index=None, date_format='%s.%f')
+            print(event_by_epoch)
+            print(len(event_by_epoch) == len(datos_input))
+            # Creamos df auxiliar con timestamps
+            df_final = []
+            for i, ep in enumerate(datos_input):
+                df = ep.to_data_frame(time_format=None, scalings=dict(eeg=1))
+                #df['Timestamp'] = timestamps[i]
+                df['event'] = event_by_epoch[i][0]
+                df_final.append(df)
+                # Asociamos el evento al Epoch anterior, el anterior al que acabamos de meter en df_final
+                if event_by_epoch[i][0] != 0:
+                    df_final[-2]['event'] = df_final[-1]['event']
+
+            df_final_out = pd.concat(df_final)
+            df_final_out = df_final_out.rename(columns={'condition': 'distraction'})
+            df_final_out.to_csv(path + 'out.csv', index=None, date_format='%s.%f')
 
         print(colored("EEGRecording closed", "red"))
 
@@ -97,4 +127,5 @@ if __name__ == '__main__':
 
     queue = multiprocessing.Queue()
     qev = multiprocessing.Queue()
-    start_recording('openbcigui', 60, queue, qev)
+    qevd = multiprocessing.Queue()
+    start_recording('openbcigui', 60, queue, qev, qevd, 'test')

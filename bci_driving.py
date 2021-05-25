@@ -428,21 +428,26 @@ class DualControl(object):
                 elif event.key == K_z and not self.start_simulation:
                     world.init_simulation()
                     world.simulation_type = 1
-                    global qdistraction
-                    qdistraction.put(1)
-                    print(colored("Comenzando simulación 1...", 'green'))
+                    # global qdistraction
+                    # qdistraction.put(1)
+                    print(colored("Comenzando simulación...", 'green'))
+                    print("Timestamp comienzo")
+                    time_event = datetime.datetime.now()
+                    print(time_event.timestamp())
                     global queue
                     queue.put(True)
+                    global start_stim
+                    start_stim = True
                     self.start_simulation = 1
-                elif event.key == K_x and not self.start_simulation:
-                    world.init_simulation()
-                    world.simulation_type = 2
-                    global qdistraction
-                    qdistraction.put(2)
-                    print(colored("Comenzando simulación 2...", 'green'))
-                    global queue
-                    queue.put(True)
-                    self.start_simulation = 1
+                # elif event.key == K_x and not self.start_simulation:
+                #     world.init_simulation()
+                #     world.simulation_type = 2
+                #     # global qdistraction
+                #     # qdistraction.put(2)
+                #     print(colored("Comenzando simulación 2...", 'green'))
+                #     global queue
+                #     queue.put(True)
+                #     self.start_simulation = 1
                 if isinstance(self._control, carla.VehicleControl):
                     if event.key == K_m:
                         self._control.manual_gear_shift = not self._control.manual_gear_shift
@@ -794,7 +799,7 @@ class CollisionSensor(object):
         if not self:
             return
         actor_type = get_actor_display_name(event.other_actor)
-        self.hud.notification('Collision with %r' % actor_type)
+        #self.hud.notification('Collision with %r' % actor_type)
         #enriquetomasmb
         time_event = datetime.datetime.now()
         if (time_event - self.last_collision) > datetime.timedelta(seconds=3):
@@ -845,7 +850,7 @@ class LaneInvasionSensor(object):
             return
         lane_types = set(x.type for x in event.crossed_lane_markings)
         text = ['%r' % str(x).split()[-1] for x in lane_types]
-        self.hud.notification('Crossed line %s' % ' and '.join(text))
+        # self.hud.notification('Crossed line %s' % ' and '.join(text))
         time_event = datetime.datetime.now()
         if (time_event - self.last_collision) > datetime.timedelta(seconds=3):
 
@@ -1137,84 +1142,126 @@ def startMath(hud):
     try:
         width = hud.dim[0]
         height = hud.dim[1]
-        global qev
-        global qdistraction
-        distraction = 0
+        global qevd
+        global start_stim
+        # global qdistraction
+        # distraction = 0
+        started = False
+        contador = 0
+        image = pygame.image.load("resources/azul.jpg")
         while True:
-            if not qdistraction.empty():
-                distraction = qdistraction.get()
-            if distraction == 2:
+            if (started or start_stim):
+                started = True
+                print("Distraction",contador)
+                contador += 1
+            # if not qdistraction.empty():
+            #     distraction = qdistraction.get()
+            # if distraction == 2:
                 q, ans = genMath()
                 hud._distraction_text.set_dim_pos((width/4, 40), (60, 60))
+                time.sleep(20)
                 time_event = datetime.datetime.now()
-                time.sleep(10)
                 hud.distraction('{}'.format(q), seconds=5)
-                qev.put((51, time_event.timestamp()))
+                qevd.put((51, time_event.timestamp()))
 
                 q, ans = genMath()
                 hud._distraction_text.set_dim_pos((width/4, 40), (width/2 + 60, 60))
                 time.sleep(10)
                 time_event = datetime.datetime.now()
                 hud.distraction('{}'.format(q), seconds=5)
-                qev.put((51, time_event.timestamp()))
-                time.sleep(20)
-            elif distraction == 99:
-                return
+                qevd.put((51, time_event.timestamp()))
+
+                time.sleep(10)
+
+                x = random.randint(100, 900)
+                y = random.randint(100, 900)
+                hud._images.set_dim_pos((80, 80), (x, y))
+                time_event = datetime.datetime.now()
+                hud.dimage(image, seconds=10)
+                qevd.put((52, time_event.timestamp()))
+                time.sleep(5)
+                x = random.randint(100, 900)
+                y = random.randint(100, 900)
+                hud._images.set_dim_pos((80, 80), (x, y))
+                time_event = datetime.datetime.now()
+                hud.dimage(image, seconds=10)
+                qevd.put((52, time_event.timestamp()))
+                time.sleep(5)
+                x = random.randint(100, 900)
+                y = random.randint(100, 900)
+                hud._images.set_dim_pos((80, 80), (x, y))
+                time_event = datetime.datetime.now()
+                hud.dimage(image, seconds=10)
+                qevd.put((52, time_event.timestamp()))
+                time.sleep(5)
+                x = random.randint(100, 900)
+                y = random.randint(100, 900)
+                hud._images.set_dim_pos((80, 80), (x, y))
+                time_event = datetime.datetime.now()
+                hud.dimage(image, seconds=5)
+                qevd.put((52, time_event.timestamp()))
+
+            # elif distraction == 99:
+            #     return
     finally:
         pass
 
 def startBox(hud):
     try:
-        global qev
-        global qdistraction
-        image = pygame.image.load("resources/azul.jpg")
-        distraction = 0
+        global qevd
+        global start_stim
+        # global qdistraction
+        images = [pygame.image.load("resources/azul.jpg"), pygame.image.load("resources/purple.jpg"), pygame.image.load("resources/red.jpg"), pygame.image.load("resources/yellow.jpg")]
+        # distraction = 0
+        started = False # False
+        contador = 0
         while True:
-            if not qdistraction.empty():
-                distraction = qdistraction.get()
-            if distraction == 2:
+            if (started or start_stim):
+                started = True
+                print("Box",contador)
+                contador += 1
+                # if not qdistraction.empty():
+                #     distraction = qdistraction.get()
+                # if distraction == 2:
                 x = random.randint(100, 900)
                 y = random.randint(100, 900)
                 hud._images.set_dim_pos((80, 80), (x, y))
-                time.sleep(50)
+                time.sleep(40)
                 time_event = datetime.datetime.now()
-                hud.dimage(image, seconds=5)
-                qev.put((52, time_event.timestamp()))
+                hud.dimage(random.choice(images), seconds=5)
+                qevd.put((52, time_event.timestamp()))
 
                 x = random.randint(100, 900)
                 y = random.randint(100, 900)
                 hud._images.set_dim_pos((80, 80), (x, y))
                 time_event = datetime.datetime.now()
-                hud.dimage(image, seconds=5)
-                qev.put((52, time_event.timestamp()))
+                hud.dimage(random.choice(images), seconds=5)
+                qevd.put((52, time_event.timestamp()))
 
                 x = random.randint(100, 900)
                 y = random.randint(100, 900)
                 hud._images.set_dim_pos((80, 80), (x, y))
                 time_event = datetime.datetime.now()
-                hud.dimage(image, seconds=5)
-                qev.put((52, time_event.timestamp()))
+                hud.dimage(random.choice(images), seconds=5)
+                qevd.put((52, time_event.timestamp()))
 
                 x = random.randint(100, 900)
                 y = random.randint(100, 900)
                 hud._images.set_dim_pos((80, 80), (x, y))
                 time_event = datetime.datetime.now()
-                hud.dimage(image, seconds=5)
-                qev.put((52, time_event.timestamp()))
+                hud.dimage(random.choice(images), seconds=5)
+                qevd.put((52, time_event.timestamp()))
 
-                time.sleep(50)
-            elif distraction == 99:
-                return
+            # elif distraction == 99:
+            #     return
         # t_end = time.time() + 5
         # while time.time() < t_end:  
         #     hud.distraction('Hola esto es una prueba', seconds=5)
     finally:
         pass
 
-def init_game(args, path, server):
+def init_game(args, path):
     global spawn_point
-    global stim_server
-    stim_server = server
 
     pygame.mixer.pre_init(44100, -16, 2, 4096)
     pygame.mixer.init()
@@ -1275,20 +1322,18 @@ def init_game(args, path, server):
         cambio_pas = 0# comience idealmente en neutro
         control_loop= True
         # Tiempo de simulación
-        t_sim = 10
+        t_sim = 10 # 5 para autonomo y 10 con distracciones
 
         distance = lambda l: math.sqrt((l.x - t.location.x)**2 + (l.y - t.location.y)**2 + (l.z - t.location.z)**2)
         dmax = 30;dmin = 0
         m = (0-1)/(dmax-dmin);b = -m*(dmax)
 
-        global qdistraction
-        qdistraction = multiprocessing.Queue()
-        tr = threading.Thread(target=startMath, args=(hud,qdistraction))
+        tr = threading.Thread(target=startMath, args=(hud,))
         tr.daemon = True
         tr.start()
-        tr2 = threading.Thread(target=startBox, args=(hud,qdistraction))
-        tr2.daemon = True
-        tr2.start()
+        # tr2 = threading.Thread(target=startBox, args=(hud,))
+        # tr2.daemon = True
+        # tr2.start()
         while control_loop:
             t = world.player.get_transform()
             c = world.player.get_control()
@@ -1387,29 +1432,28 @@ def init_game(args, path, server):
                 #print(round(time.time()-start)-1)
                 if round(time.time()-start)-1 >= t_sim*60:
                     # MENSAJE DE FIN
-                    default_font = 'monotypecorsiva'
-                    mono = pygame.font.match_font(default_font)
-                    font_mono = pygame.font.Font(mono, 60)                
-                    surface = font_mono.render('Fin de la simulación', True, (255, 255, 255))
-                    display.blit(surface, (round(args.height/2),round(args.width/2)-300))# 8                    
-                    pygame.joystick.quit()
-                    # Pasados 5 segundos más, cierre el juego
-                    if round(time.time()-start)-1 >= t_sim*60+5:
-                        control_loop = False
+                    # default_font = 'monotypecorsiva'
+                    # mono = pygame.font.match_font(default_font)
+                    # font_mono = pygame.font.Font(mono, 60)                
+                    # surface = font_mono.render('Fin de la simulación', True, (255, 255, 255))
+                    # display.blit(surface, (round(args.height/2),round(args.width/2)-300))# 8                    
+                    # pygame.joystick.quit()
+                    control_loop = False
 
             pygame.display.flip()
 
     finally:
+        pass
 
-        if (world and world.recording_enabled):
-            client.stop_recorder()
+    #     if (world and world.recording_enabled):
+    #         client.stop_recorder()
         
-        #client.apply_batch([carla.command.DestroyActor(x.id) for x in actor_list])
+    #     #client.apply_batch([carla.command.DestroyActor(x.id) for x in actor_list])
 
-        if world is not None:
-            world.destroy()
+    #     if world is not None:
+    #         world.destroy()
 
-        pygame.quit()
+    #     pygame.quit()
 
 
 # ==============================================================================
@@ -1517,24 +1561,37 @@ def main():
         out_file.write(str(user))
 
     try:
-        # Creating stim communication
-        info = StreamInfo('Estimulo', 'Estimulo', 1, 0, 'int32', 'estimulo12310')
-        server = StreamOutlet(info)
+        # # Creating stim communication
+        # info = StreamInfo('Estimulo', 'Estimulo', 1, 0, 'int32', 'estimulo12310')
+        # server = StreamOutlet(info)
 
         #Creating processes: NPCs and recording EEG
         thread_npc = multiprocessing.Process(target=spawn_npcs)
         #thread_npc.start()
         
+        global start_stim
+        start_stim = False
+
         global queue
         queue = multiprocessing.Queue()
-        queue.put(False)
+        # queue.put(False)
         global qev
         qev = multiprocessing.Queue()
-        thread_rec = multiprocessing.Process(target=start_recording, args=('openbcigui', 60, queue, qev, "experiments/{}/eeg/".format(user.path)))
+        global qevd
+        qevd = multiprocessing.Queue()
+        thread_rec = multiprocessing.Process(target=start_recording, args=('BBT-E08-AAB018_EEG_0', 60, queue, qev, qevd, "experiments/{}/eeg/".format(user.path)))
+        thread_rec.start()
+
+        # Ejecución directa sin distracciones, experimentación de conducción autónoma.
+            # Conducción autónoma (el qevd de aquí no se usa)
+            # Desactivar startMath y startBox (los procesos)
+            # Sí que se almacena los eventos dentro del simulador
+        # qevdno = multiprocessing.Queue()
+        # thread_rec = multiprocessing.Process(target=start_recording, args=('BBT-E08-AAB018_EEG_0', 60, queue, qev, qevdno, "experiments/{}/eeg/".format(user.path)))
         # thread_rec.start()
 
         # Init driving scenario
-        init_game(args, user.path, server)
+        init_game(args, user.path)
 
     except KeyboardInterrupt:
         pass
