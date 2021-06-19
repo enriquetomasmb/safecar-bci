@@ -147,3 +147,5 @@ _*
 
 *.wav
 analysis/
+eyetracking/
+*bkp*
