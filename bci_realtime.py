@@ -80,6 +80,8 @@ def start_recording(terminate_event, host, wait_max, q, qev, qevd, path):
                     epoch = mne.epochs.combine_event_ids(epoch, ['1'], {map_event_distraction[int(last_event_distraction[0])] : int(last_event_distraction[0])})
                     epoch.selection = [n_epochs]
                     event_distraction_cont -= 1
+                    if event_distraction_cont == 0:
+                        event_distraction = (0,0)
                 else:
                     if event_distraction != (0,0):
                         # Si se ha mostrado Math (5sec) = marcar esta Epoch y las 4 siguientes
@@ -91,7 +93,7 @@ def start_recording(terminate_event, host, wait_max, q, qev, qevd, path):
                         epoch.selection = [n_epochs]
                         event_distraction_cont -= 1
                     else:
-                        epoch = mne.epochs.combine_event_ids(epoch, ['1'], {map_event_distraction[int(last_event_distraction[0])] : int(last_event_distraction[0])})
+                        epoch = mne.epochs.combine_event_ids(epoch, ['1'], {map_event_distraction[int(event_distraction[0])] : int(event_distraction[0])})
                         epoch.selection = [n_epochs]
 
                 # ya se envían en uV, no hace falta hacer scaling
@@ -131,8 +133,8 @@ def start_recording(terminate_event, host, wait_max, q, qev, qevd, path):
             df_final_out = df_final_out.rename(columns={'condition': 'distraction_str'})
             distraction_ids = []
             for i in df_final_out['distraction_str']:
-                print(list(map_event_distraction.values()).index(i))
-                print(map_event_distraction.keys())
+                # print(list(map_event_distraction.values()).index(i))
+                # print(map_event_distraction.keys())
                 distraction_ids.append(list(map_event_distraction.keys())[list(map_event_distraction.values()).index(i)])
 
             df_final_out.insert(1,'distraction', distraction_ids)

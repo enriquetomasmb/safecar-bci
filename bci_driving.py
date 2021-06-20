@@ -585,7 +585,7 @@ class HUD(object):
         v = world.player.get_velocity()
         c = world.player.get_control()
         self._info_text = [
-            'Tiempo restante: % 12s' % datetime.timedelta(seconds=int(1*60-(time.time()-self.timer))) if self.timer != 0 else 'Pulsa "Z" para comenzar la simulación 1 | Pulsa "X" para comenzar la simulación 2',#self.simulation_time
+            'Tiempo restante: % 12s' % datetime.timedelta(seconds=int(10*60-(time.time()-self.timer))) if self.timer != 0 else 'Pulsa "Z" para comenzar la simulación 1 | Pulsa "X" para comenzar la simulación 2',#self.simulation_time
             'Math',
             'Box'
         ]
@@ -1325,7 +1325,7 @@ def init_game(args, path):
         cambio_pas = 0# comience idealmente en neutro
         control_loop= True
         # Tiempo de simulación
-        t_sim = 1 # 5 para autonomo y 10 con distracciones
+        t_sim = 10 # 5 para autonomo y 10 con distracciones
 
         # distance = lambda l: math.sqrt((l.x - t.location.x)**2 + (l.y - t.location.y)**2 + (l.z - t.location.z)**2)
         # dmax = 30;dmin = 0
