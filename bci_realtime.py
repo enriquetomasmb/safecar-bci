@@ -57,9 +57,9 @@ def start_recording(terminate_event, host, wait_max, q, qev, qevd, path):
 
         started = False # False
         event = (0,0) # Extern events
-        event_distraction = (0,0) # Math or Box
+        event_distraction = (0,0,0) # Math or Box
 
-        last_event_distraction = (0,0)
+        last_event_distraction = (0,0,0)
         event_distraction_cont = 0
 
         while terminate_event.value:
@@ -81,14 +81,14 @@ def start_recording(terminate_event, host, wait_max, q, qev, qevd, path):
                     epoch.selection = [n_epochs]
                     event_distraction_cont -= 1
                     if event_distraction_cont == 0:
-                        event_distraction = (0,0)
+                        event_distraction = (0,0,0)
                 else:
-                    if event_distraction != (0,0):
+                    if event_distraction != (0,0,0):
                         # Si se ha mostrado Math (5sec) = marcar esta Epoch y las 4 siguientes
                         # Si se ha mostrado Box (5sec) = marcaar esta Epoch y las 4 siguientes
                         #print(colored("{} - Event {}".format(event_distraction[1], event_distraction[0]), 'green'))
                         last_event_distraction = event_distraction
-                        event_distraction_cont = 5
+                        event_distraction_cont = event_distraction[1] # distraction duration
                         epoch = mne.epochs.combine_event_ids(epoch, ['1'], {map_event_distraction[int(last_event_distraction[0])] : int(last_event_distraction[0])})
                         epoch.selection = [n_epochs]
                         event_distraction_cont -= 1
@@ -103,7 +103,7 @@ def start_recording(terminate_event, host, wait_max, q, qev, qevd, path):
                 
                 n_epochs += 1
                 event = (0,0)
-                event_distraction = (0,0)
+                event_distraction = (0,0,0)
                 #print(time.time())
                 #epoch.average().plot(axes=ax)
                 # fig.canvas.draw()
