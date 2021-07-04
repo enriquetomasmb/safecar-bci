@@ -2,7 +2,7 @@
 <br>
 <p align="center">
   <a href="https://github.com/enriquetomasmb/bci-driving">
-    <img src="experiments/bci.png" alt="BCI" width="400" height="260">
+    <img src="experiments/bci-driving.png" alt="BCI" width="943" height="462">
   </a>
   <h3 align="center">Brain-Computer Interface Project</h3>
   <br>
