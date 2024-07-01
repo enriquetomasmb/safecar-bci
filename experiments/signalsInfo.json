@@ -1,0 +1,39 @@
+{
+    "device": "BBT-E08-AAB018",
+    "eeg_sensor_type": "Dry",
+    "record_date": "lu. may. 24 23:19:18 2021",
+    "signals": [
+        {
+            "channels": 8,
+            "filename": "EEG.csv",
+            "mode": 1,
+            "samples_per_block": 8,
+            "sampling_rate": 256,
+            "type": "EEG"
+        },
+        {
+            "channels": 9,
+            "filename": "IMU_B.csv",
+            "mode": 1,
+            "samples_per_block": 1,
+            "sampling_rate": 32,
+            "type": "IMU_B"
+        },
+        {
+            "channels": 1,
+            "filename": "Photodiode.csv",
+            "mode": 1,
+            "samples_per_block": 8,
+            "sampling_rate": 256,
+            "type": "FOT"
+        },
+        {
+            "channels": 1,
+            "filename": "D in.csv",
+            "mode": 1,
+            "samples_per_block": 8,
+            "sampling_rate": 256,
+            "type": "DIN"
+        }
+    ]
+}
